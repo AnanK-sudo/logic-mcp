@@ -8,4 +8,10 @@ describe('bounce destination', () => {
   it('strips a provided extension', () => {
     expect(bounceDestination('/tmp/x', 'mix.wav').full).toBe('/tmp/x/mix.wav');
   });
+  it('throws when name contains path separator', () => {
+    expect(() => bounceDestination('/tmp/x', 'a/b')).toThrow(/Invalid filename.*path separators/);
+  });
+  it('throws when name is empty after extension strip', () => {
+    expect(() => bounceDestination('/tmp/x', '.wav')).toThrow(/empty/);
+  });
 });

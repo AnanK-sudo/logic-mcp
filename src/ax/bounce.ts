@@ -1,4 +1,4 @@
-import { existsSync, statSync, mkdirSync } from 'node:fs';
+import { existsSync, statSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { runJxa } from './run-jxa.js';
 import { JXA_PRELUDE } from './prelude.js';
@@ -10,6 +10,16 @@ export const BOUNCE_MENU_PATH = ['File', 'Bounce', 'Project or Section…'];
 
 export function bounceDestination(destDir: string, fileName: string) {
   const name = fileName.replace(/\.(wav|aiff|mp3)$/i, '');
+  if (!name) {
+    const err = new Error('Filename is empty after extension strip') as Error & { fixes?: string[] };
+    err.fixes = ['Provide a plain file name without path separators.'];
+    throw err;
+  }
+  if (/[\/\0]/.test(name)) {
+    const err = new Error(`Invalid filename: "${name}" contains path separators or null bytes`) as Error & { fixes?: string[] };
+    err.fixes = ['Provide a plain file name without path separators.'];
+    throw err;
+  }
   return { dir: destDir, name, full: join(destDir, `${name}.wav`) };
 }
 
@@ -63,6 +73,7 @@ return false;`);
 export async function bounce(opts: { destDir: string; fileName: string; timeoutSec?: number }): Promise<string> {
   const dest = bounceDestination(opts.destDir, opts.fileName);
   mkdirSync(dest.dir, { recursive: true });
+  rmSync(dest.full, { force: true });
   await clickMenu(BOUNCE_MENU_PATH);
   await waitFor(bounceDialogReady, 8000, 'bounce dialog');
   await configureDialogPcmWave();
@@ -76,9 +87,9 @@ export async function bounce(opts: { destDir: string; fileName: string; timeoutS
   await runJxa(`${JXA_PRELUDE}
 const els = lp.windows[0].entireContents();
 for (const el of els) {
-  try { if (el.role() === 'AXTextField') { el.value = '${dest.name.replace(/'/g, "\\'")}'; return true; } } catch (e) {}
+  try { if (el.role() === 'AXTextField') { el.value = args.name; return true; } } catch (e) {}
 }
-throw new Error('Save panel name field not found');`, null, 15000);
+throw new Error('Save panel name field not found');`, { name: dest.name }, 15000);
   await sleep(300);
   if (!(await clickDialogButton('Bounce'))) {
     if (!(await clickDialogButton('Save'))) await keyCode(36);
