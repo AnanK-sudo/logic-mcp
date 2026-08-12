@@ -1,4 +1,5 @@
 import { McuPorts } from './ports.js';
+import { McuState } from './feedback.js';
 
 export const NOTE = {
   REC_BASE: 0x00, SOLO_BASE: 0x08, MUTE_BASE: 0x10, SELECT_BASE: 0x18,
@@ -30,7 +31,7 @@ export function vpot(ch: number, ticks: number): number[][] {
 }
 
 export class Mcu {
-  state: unknown = null;
+  readonly state = new McuState();
   private ports = new McuPorts();
   private wired = false;
 
@@ -41,12 +42,37 @@ export class Mcu {
       this.wired = true;
     }
   }
-  protected ingest(_bytes: number[]): void {}
+  protected ingest(bytes: number[]): void { this.state.ingest(bytes); }
   isOpen(): boolean { return this.ports.isOpen(); }
   send(msgs: number[][]): void {
     this.ensureOpen();
     for (const m of msgs) this.ports.send(m);
   }
+
+  async ping(timeoutMs = 1500): Promise<boolean> {
+    this.ensureOpen();
+    const before = this.state.lastFeedbackAt;
+    this.send(press(NOTE.NAME_VALUE));
+    await sleep(120);
+    this.send(press(NOTE.NAME_VALUE));
+    const t0 = Date.now();
+    while (Date.now() - t0 < timeoutMs) {
+      if (this.state.lastFeedbackAt !== before && this.state.lastFeedbackAt !== null) return true;
+      await sleep(50);
+    }
+    return false;
+  }
+
+  async check(): Promise<{ connected: boolean; feedback: boolean }> {
+    try {
+      this.ensureOpen();
+      const recent = this.state.lastFeedbackAt && Date.now() - this.state.lastFeedbackAt < 10000;
+      return { connected: true, feedback: recent ? true : await this.ping() };
+    } catch {
+      return { connected: false, feedback: false };
+    }
+  }
 }
 
 export const mcu = new Mcu();
+export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
