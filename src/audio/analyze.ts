@@ -21,16 +21,22 @@ export const BANDS = [
 ] as const;
 
 function num(m: RegExpMatchArray | null): number {
-  if (!m) throw new Error('ffmpeg output missing expected field');
+  if (!m) {
+    const err = new Error('ffmpeg output missing expected field') as Error & { fixes?: string[] };
+    err.fixes = ['ffmpeg output format not recognized; re-run once, and if it persists report the stderr snippet.'];
+    throw err;
+  }
   const v = m[1];
   return v === '-inf' ? -120 : Math.round(parseFloat(v) * 10) / 10;
 }
 
 export function parseEbur128(s: string) {
+  const summaryIndex = s.lastIndexOf('Summary:');
+  const summaryText = summaryIndex >= 0 ? s.slice(summaryIndex) : s;
   return {
-    lufsIntegrated: num(s.match(/I:\s+(-?[\d.]+|-inf) LUFS/)),
-    lufsRange: num(s.match(/LRA:\s+(-?[\d.]+|-inf) LU/)),
-    truePeakDb: num(s.match(/Peak:\s+(-?[\d.]+|-inf) dBFS/)),
+    lufsIntegrated: num(summaryText.match(/I:\s+(-?[\d.]+|-inf) LUFS/)),
+    lufsRange: num(summaryText.match(/LRA:\s+(-?[\d.]+|-inf) LU/)),
+    truePeakDb: num(summaryText.match(/Peak:\s+(-?[\d.]+|-inf) dBFS/)),
   };
 }
 
@@ -54,17 +60,23 @@ async function ffmpegStderr(args: string[]): Promise<string> {
   } catch (e: unknown) {
     const err = e as { stderr?: string; message: string };
     if (err.stderr && /Summary|Overall|Duration/.test(err.stderr)) return err.stderr;
-    throw new Error(`ffmpeg failed: ${err.message}`);
+    const error = new Error(`ffmpeg failed: ${err.message}`) as Error & { fixes?: string[] };
+    error.fixes = ['Verify the file is a readable audio file (wav, aiff, mp3).'];
+    throw error;
   }
 }
 
 export async function analyzeAudio(filePath: string): Promise<AudioAnalysis> {
-  if (!existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
+  if (!existsSync(filePath)) {
+    const err = new Error(`File not found: ${filePath}`) as Error & { fixes?: string[] };
+    err.fixes = ['Check the path. If you have not bounced yet, run the bounce tool first.'];
+    throw err;
+  }
   const main = await ffmpegStderr(['-hide_banner', '-i', filePath, '-af', 'astats=measure_perchannel=none,ebur128=peak=true', '-f', 'null', '-']);
   const bands: BandEnergy[] = [];
   for (const b of BANDS) {
     const s = await ffmpegStderr(['-hide_banner', '-i', filePath, '-af',
-      `highpass=f=${b.lowHz}:poles=2,lowpass=f=${b.highHz}:poles=2,astats=measure_perchannel=none`, '-f', 'null', '-']);
+      `highpass=f=${b.lowHz}:poles=2,highpass=f=${b.lowHz}:poles=2,lowpass=f=${b.highHz}:poles=2,lowpass=f=${b.highHz}:poles=2,astats=measure_perchannel=none`, '-f', 'null', '-']);
     bands.push({ ...b, rmsDb: parseAstats(s).rmsDb });
   }
   return { ...parseEbur128(main), ...parseAstats(main), durationSec: parseDuration(main), bands };

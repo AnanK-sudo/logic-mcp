@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { parseEbur128, parseAstats, parseDuration } from '../src/audio/analyze.js';
 
-const EBUR = `[Parsed_ebur128_0 @ 0x1] Summary:
+const EBUR = `[Parsed_ebur128_0 @ 0x1] t: 0.1 TARGET:-23 LUFS M:-120.7 S:-120.7 I: -70.0 LUFS LRA: 0.0 LU FTPK: -18.1 dBFS TPK: -18.1 dBFS
+[Parsed_ebur128_0 @ 0x1] t: 1.5 TARGET:-23 LUFS M: -21.8 S:-120.7 I: -19.5 LUFS LRA: 0.0 LU FTPK: -18.1 dBFS TPK: -18.1 dBFS
+[Parsed_ebur128_0 @ 0x1] Summary:
 
   Integrated loudness:
     I:         -16.2 LUFS
