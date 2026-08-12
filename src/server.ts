@@ -1,5 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerMasteringTools } from './tools/mastering.js';
 
 export function createServer(): McpServer {
-  return new McpServer({ name: 'logic-mcp', version: '0.1.0' });
+  const server = new McpServer({ name: 'logic-mcp', version: '0.1.0' });
+  registerMasteringTools(server);
+  return server;
 }
