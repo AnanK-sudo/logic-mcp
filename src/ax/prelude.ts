@@ -4,6 +4,7 @@ import { LOGIC_PROCESS } from '../constants.js';
 export const JXA_PRELUDE = `
 const se = Application('System Events');
 const lp = se.processes['${LOGIC_PROCESS}'];
+if (!lp.exists()) throw new Error('NO_PROCESS: ${LOGIC_PROCESS} is not running');
 function must(cond, msg) { if (!cond) throw new Error(msg); }
 function names(coll) { const out = []; for (let i = 0; i < coll.length; i++) { try { out.push(coll[i].name()); } catch (e) { out.push(null); } } return out; }
 `;

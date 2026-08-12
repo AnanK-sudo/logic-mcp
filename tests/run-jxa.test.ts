@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runJxa, JxaError } from '../src/ax/run-jxa.js';
+import { JXA_PRELUDE } from '../src/ax/prelude.js';
 
 describe('runJxa', () => {
   it('round-trips JSON args and result', async () => {
@@ -14,5 +15,8 @@ describe('runJxa', () => {
   });
   it('classifies timeouts', async () => {
     await expect(runJxa('delay(3); return 1;', null, 500)).rejects.toMatchObject({ kind: 'timeout' });
+  });
+  it('classifies no-process sentinel', async () => {
+    await expect(runJxa("throw new Error('NO_PROCESS: X is not running');")).rejects.toMatchObject({ kind: 'no-process' });
   });
 });

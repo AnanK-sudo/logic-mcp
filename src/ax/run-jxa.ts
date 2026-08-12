@@ -26,7 +26,7 @@ function run(argv) {
           if (/assistive access|-25211|-1719/.test(s)) {
             return reject(new JxaError('ax-permission', 'Accessibility permission missing.', [AX_FIX]));
           }
-          if (/Can't get process|Application isn't running|-600/.test(s)) {
+          if (/NO_PROCESS:/.test(s)) {
             return reject(new JxaError('no-process', 'Logic Pro X is not running.', ['Open Logic Pro X and load a project.']));
           }
           return reject(new JxaError('script', s.trim() || err.message));
