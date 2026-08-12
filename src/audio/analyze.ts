@@ -49,7 +49,11 @@ export function parseAstats(s: string) {
 
 export function parseDuration(s: string): number {
   const m = s.match(/Duration: (\d+):(\d+):(\d+\.?\d*)/);
-  if (!m) throw new Error('ffmpeg output missing duration');
+  if (!m) {
+    const err = new Error('ffmpeg output missing duration') as Error & { fixes?: string[] };
+    err.fixes = ['ffmpeg output format not recognized; re-run once, and if it persists report the stderr snippet.'];
+    throw err;
+  }
   return parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
 }
 
