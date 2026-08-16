@@ -3,8 +3,17 @@ import { activateLogic } from '../ax/prelude.js';
 
 export type Mod = 'command' | 'option' | 'control' | 'shift';
 
+const VALID_MODS: readonly Mod[] = ['command', 'option', 'control', 'shift'];
+
 const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-const modList = (mods: Mod[]) => `[${mods.map((m) => `'${m} down'`).join(', ')}]`;
+const modList = (mods: Mod[]) => {
+  for (const m of mods) {
+    if (!VALID_MODS.includes(m)) {
+      throw new Error(`Invalid modifier key: ${JSON.stringify(m)}`);
+    }
+  }
+  return `[${mods.map((m) => `'${m} down'`).join(', ')}]`;
+};
 
 export function keystrokeSource(key: string, mods: Mod[]): string {
   return `Application('System Events').keystroke('${esc(key)}', { using: ${modList(mods)} }); return true;`;
