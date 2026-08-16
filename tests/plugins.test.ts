@@ -15,4 +15,9 @@ describe('plugin JXA generation', () => {
     expect(src).toContain('Compressor');
     expect(src).toContain('Stereo');
   });
+  it('errors out on a full strip instead of reusing the last slot', () => {
+    const src = insertPluginSource('Lead Vox', 'Compressor', 'Dynamics');
+    expect(src).toContain('No empty insert slot on strip');
+    expect(src).not.toContain('slots[slots.length - 1]');
+  });
 });

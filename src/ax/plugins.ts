@@ -30,7 +30,7 @@ must(slots.length, 'No Audio Effect insert slot found on strip. Descriptions see
   strip.entireContents().slice(0, 40).map((el) => { try { return el.description(); } catch (e) { return ''; } }).join(' | '));
 let target = null;
 for (const s of slots) { try { if (!s.value() || s.value() === '') { target = s; break; } } catch (e) {} }
-if (!target) target = slots[slots.length - 1];
+must(target, 'No empty insert slot on strip: all ' + slots.length + ' slots occupied. Remove a plugin before inserting a new one.');
 target.actions['AXShowMenu'].perform();
 delay(0.5);
 const menu = lp.menus[0];
