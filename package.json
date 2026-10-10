@@ -1,8 +1,9 @@
 {
   "name": "logic-mcp",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "MCP server that lets an AI agent act as a recording producer inside Logic Pro",
+  "main": "dist/index.js",
   "directories": {
     "doc": "docs"
   },
@@ -14,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@julusian/midi": "^3.8.1",
